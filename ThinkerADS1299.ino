@@ -38,49 +38,49 @@ boolean startedLogging = false;
 
 uint8_t counter = 0;
 
-uint8_t RESET = 2;
+
 
 boolean debugStart() {
 
   byte deviceID = ADS.getDeviceID();
 #ifdef DEBUG
-  Serial.printf("\n%dms: device id ", millis()); ADS.printHex(deviceID);
+  Serial.print(millis()); Serial.print("ms: device id "); ADS.printHex(deviceID);
 #endif
 
-  if (deviceID != ADS_ID) {
-    Serial.print("\n\n\nPEACEOUT\n\n\n");
-    return false;
-  }
+//  if (deviceID != ADS_ID) {
+//    Serial.print("\n\n\nPEACEOUT\n\n\n");
+//    return false;
+//  }
 
   //Read ADS1299 Register at address 0x00 (see Datasheet pg. 35 for more info on SPI commands)
 #ifdef DEBUG
-  Serial.printf("\n%dms 2 register at 0x00\n",millis());
+  Serial.print(millis()); Serial.println("ms 2 register at 0x00\n");
 #endif
   ADS.RREG(0x00);
 
   //PRINT ALL REGISTERS... Read 0x17 addresses starting from address 0x00 (these numbers can be replaced by binary or integer values)
 #ifdef DEBUG
-  Serial.printf("\n%dms 3 print registers\n",millis());
+  Serial.print(millis()); Serial.print("ms 3 print registers");
 #endif
   ADS.printRegisters();
 
   //Write register command (see Datasheet pg. 38 for more info about WREG)
   uint8_t writeVal = 0b11010110;
 #ifdef DEBUG
-  Serial.printf("\n%dms 4 write register CONFIG1 ",millis()); ADS.printHex(writeVal);
+  Serial.print(millis()); Serial.print("ms 4 write register CONFIG1 "); ADS.printHex(writeVal);
 #endif
   ADS.WREG(CONFIG1, writeVal);
 
   //Repeat PRINT ALL REGISTERS to verify that WREG changed the CONFIG1 register
 #ifdef DEBUG
-  Serial.printf("\n%dms 5 print registers\n",millis());
+  Serial.print(millis()); Serial.println("ms 5 print registers");
 #endif
   ADS.printRegisters();
 
   //Start data conversions command
   ADS.START(); //must start before reading data continuous
 #ifdef DEBUG
-  Serial.printf("\n%dms 6 ADS started\n",millis());
+  Serial.print(millis()); Serial.println("ms 6 ADS started");
 #endif
 
   return true;
@@ -90,18 +90,15 @@ void setup() {
 #ifdef DEBUG
   Serial.begin(115200);
   Serial.println();
-  Serial.printf("%dms START\n", millis());
+  Serial.print(millis()); Serial.println("ms START");
 #endif
 
-  pinMode(RESET, OUTPUT);
-  digitalWrite(RESET, HIGH);
-
-  ADS.setup(4, 15); // (DRDY pin, CS pin);
+  ADS.setup(4, 13, false); // (DRDY pin, CS pin);
   delay(10);  //delay to ensure connection
 
 
 #ifdef DEBUG
-  Serial.printf("%dms 0 Reset ads\n", millis());
+  Serial.print(millis()); Serial.println("ms 0 Reset ads");
 #endif
   ADS.RESET();
 
@@ -109,16 +106,20 @@ void setup() {
 
 #ifdef DEBUG
   if (debugStart()) {
-    Serial.printf("%dms ADS STARTED ads\n", millis());
+    Serial.print(millis()); Serial.println("ms ADS STARTED ads");
   } else {
-    Serial.printf("%dms !ERROR! ADS FAILED STARTED ads\n", millis());
+    Serial.print(millis()); Serial.println("ms !ERROR! ADS FAILED STARTED ads");
   }
-  Serial.printf("DRDY: %d\n", digitalRead(ADS.DRDY));
+  Serial.print("DRDY: "); Serial.println(digitalRead(ADS.DRDY));
 #endif
   ADS.RDATAC();
 }
 
 void loop(){
+  if (Serial.available()) {
+    Serial.print(Serial.read());
+    debugStart();
+  }
   //print data to the serial console for only the 1st 10seconds of
   // while(millis()<10000){
   //   if(startedLogging == false){
@@ -134,3 +135,4 @@ void loop(){
   // }
   ADS.updateData();
 }
+
